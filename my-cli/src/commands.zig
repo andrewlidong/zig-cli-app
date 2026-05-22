@@ -28,13 +28,59 @@ pub const methods = struct {
             std.debug.print(
                 "Usage: my-cli <command> [options]\n" ++
                 "Commands:\n" ++
-                "  hello    Greet someone\n" ++
-                "  help     Show this help message\n" ++
-                "" ++
-                "Options for hello:\n" ++
-                "  -n, --name <value>    Name to greet\n"
+                "  hello           Greet someone\n" ++
+                "  help            Show this help message\n" ++
+                "  user:create     Create a user (requires --username)\n" ++
+                "  user:list       List users\n" ++
+                "  config:set      Set a config value (requires --key and --value)\n" ++
+                "  config:get      Get a config value (requires --key)\n" ++
+                "\n" ++
+                "Options:\n" ++
+                "  -n, --name <value>       Name to greet\n" ++
+                "  -g, --greeting <value>   Greeting word\n" ++
+                "  -u, --username <value>   Username\n" ++
+                "  -k, --key <value>        Config key\n" ++
+                "  -v, --value <value>      Config value\n"
                 , .{}
             );
+            return true;
+        }
+
+        // Handler for the "user:create" command
+        pub fn userCreateFn(_options: []const cli.option) bool {
+            var username: []const u8 = "";
+            for (_options) |opt| {
+                if (std.mem.eql(u8, opt.name, "username")) username = opt.value;
+            }
+            std.debug.print("Creating user: {s}\n", .{username});
+            return true;
+        }
+
+        // Handler for the "user:list" command
+        pub fn userListFn(_: []const cli.option) bool {
+            std.debug.print("Listing users...\n", .{});
+            return true;
+        }
+
+        // Handler for the "config:set" command
+        pub fn configSetFn(_options: []const cli.option) bool {
+            var key: []const u8 = "";
+            var value: []const u8 = "";
+            for (_options) |opt| {
+                if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
+                if (std.mem.eql(u8, opt.name, "value")) value = opt.value;
+            }
+            std.debug.print("Setting {s} = {s}\n", .{key, value});
+            return true;
+        }
+
+        // Handler for the "config:get" command
+        pub fn configGetFn(_options: []const cli.option) bool {
+            var key: []const u8 = "";
+            for (_options) |opt| {
+                if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
+            }
+            std.debug.print("Getting {s}...\n", .{key});
             return true;
         }
     };
@@ -49,6 +95,21 @@ pub const methods = struct {
         // Handler for the "greeting" option
         pub fn greetingFn(_: []const u8) bool {
             // Option-specific logic could go here
+            return true;
+        }
+
+        // Handler for the "username" option
+        pub fn usernameFn(_: []const u8) bool {
+            return true;
+        }
+
+        // Handler for the "key" option
+        pub fn keyFn(_: []const u8) bool {
+            return true;
+        }
+
+        // Handler for the "value" option
+        pub fn valueFn(_: []const u8) bool {
             return true;
         }
     };

@@ -15,6 +15,27 @@ pub fn main() !void {
             .name = "help",
             .func = &cmd.methods.commands.helpFn,
         },
+        // User commands
+        cli.command{
+            .name = "user:create",
+            .func = &cmd.methods.commands.userCreateFn,
+            .req = &.{"username"},
+        },
+        cli.command{
+            .name = "user:list",
+            .func = &cmd.methods.commands.userListFn,
+        },
+        // Config commands
+        cli.command{
+            .name = "config:set",
+            .func = &cmd.methods.commands.configSetFn,
+            .req = &.{"key", "value"},
+        },
+        cli.command{
+            .name = "config:get",
+            .func = &cmd.methods.commands.configGetFn,
+            .req = &.{"key"},
+        },
     };
 
     // Define available options
@@ -30,6 +51,24 @@ pub fn main() !void {
             .short = 'g',
             .long = "greeting",
             .func = &cmd.methods.options.greetingFn,
+        },
+        cli.option{
+            .name = "username",
+            .short = 'u',
+            .long = "username",
+            .func = &cmd.methods.options.usernameFn,
+        },
+        cli.option{
+            .name = "key",
+            .short = 'k',
+            .long = "key",
+            .func = &cmd.methods.options.keyFn,
+        },
+        cli.option{
+            .name = "value",
+            .short = 'v',
+            .long = "value",
+            .func = &cmd.methods.options.valueFn,
         },
     };
 
