@@ -18,6 +18,9 @@ zig build
 ./zig-out/bin/cli config:set -k port -v 8080
 ./zig-out/bin/cli config:get -k port
 ./zig-out/bin/cli process                       # ~5s spinner demo
+./zig-out/bin/cli interactive                   # arrow-key menu (macOS/Linux TTY)
 ```
 
 short and long flags both work (`-g` / `--greeting`). missing a required option fails with `MissingRequiredOption`. the `hello` greeting prints in green / cyan / yellow via ansi escape codes.
+
+`interactive` drops you into a TUI: ↑/↓ to move, Enter to pick, Esc / Ctrl+C to cancel. It reuses the same handlers as the flag-driven commands, prompting you for each input.
