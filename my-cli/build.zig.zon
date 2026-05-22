@@ -5,7 +5,7 @@
 
     .minimum_zig_version = "0.15.0-dev.64+2a4e06bcb",
 
-    .fingerprint = 0xd5b3a843fb43c32a,
+    .fingerprint = 0x48f6513c420db53a,
 
     .paths = .{
         "build.zig", "build.zig.zon", "src",
