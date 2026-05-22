@@ -41,6 +41,11 @@ pub fn main() !void {
             .name = "process",
             .func = &cmd.methods.commands.longRunningCommandFn,
         },
+        // Arrow-key driven menu
+        cli.command{
+            .name = "interactive",
+            .func = &cmd.methods.commands.interactiveFn,
+        },
     };
 
     // Define available options
