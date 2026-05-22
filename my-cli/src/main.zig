@@ -8,7 +8,8 @@ pub fn main() !void {
         cli.command{
             .name = "hello",
             .func = &cmd.methods.commands.helloFn,
-            .opt = &.{"name"},  // "name" is optional for the hello command
+            .req = &.{"greeting"},  // "greeting" is required
+            .opt = &.{"name"},      // "name" remains optional
         },
         cli.command{
             .name = "help",
@@ -23,6 +24,12 @@ pub fn main() !void {
             .short = 'n',
             .long = "name",
             .func = &cmd.methods.options.nameFn,
+        },
+        cli.option{
+            .name = "greeting",
+            .short = 'g',
+            .long = "greeting",
+            .func = &cmd.methods.options.greetingFn,
         },
     };
 
