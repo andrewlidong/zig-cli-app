@@ -179,3 +179,33 @@ pub fn startWithArgs(commands: []const command, options: []const option, args: a
     if(debug) std.debug.print("Command executed successfully: {s}\n", .{cmd.name});
 }
 
+pub const Color = enum {
+    Reset,
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+
+    pub fn ansiCode(self: Color) []const u8 {
+        return switch (self) {
+            .Reset => "\x1b[0m",
+            .Black => "\x1b[30m",
+            .Red => "\x1b[31m",
+            .Green => "\x1b[32m",
+            .Yellow => "\x1b[33m",
+            .Blue => "\x1b[34m",
+            .Magenta => "\x1b[35m",
+            .Cyan => "\x1b[36m",
+            .White => "\x1b[37m",
+        };
+    }
+};
+
+pub fn printColored(color: Color, comptime fmt: []const u8, args: anytype) void {
+    std.debug.print("{s}" ++ fmt ++ "{s}", .{color.ansiCode()} ++ args ++ .{Color.Reset.ansiCode()});
+}
+

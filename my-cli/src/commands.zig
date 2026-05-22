@@ -19,7 +19,9 @@ pub const methods = struct {
                 }
             }
 
-            std.debug.print("{s}, {s}!\n", .{greeting, name});
+            cli.printColored(.Green, "{s}, ", .{greeting});
+            cli.printColored(.Cyan, "{s}", .{name});
+            cli.printColored(.Yellow, "!\n", .{});
             return true;
         }
 
