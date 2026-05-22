@@ -29,5 +29,3 @@ pub fn main() !void {
     // Start the CLI application
     try cli.start(&commands, &options, true);
 }
-
-
