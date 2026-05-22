@@ -36,6 +36,11 @@ pub fn main() !void {
             .func = &cmd.methods.commands.configGetFn,
             .req = &.{"key"},
         },
+        // Demo of the Spinner from cli.zig
+        cli.command{
+            .name = "process",
+            .func = &cmd.methods.commands.longRunningCommandFn,
+        },
     };
 
     // Define available options

@@ -209,3 +209,29 @@ pub fn printColored(color: Color, comptime fmt: []const u8, args: anytype) void 
     std.debug.print("{s}" ++ fmt ++ "{s}", .{color.ansiCode()} ++ args ++ .{Color.Reset.ansiCode()});
 }
 
+pub const Spinner = struct {
+    frames: []const []const u8,
+    current: usize = 0,
+    message: []const u8,
+    timer: std.time.Timer,
+
+    pub fn init(message: []const u8) !Spinner {
+        return Spinner{
+            .frames = &[_][]const u8{ "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" },
+            .message = message,
+            .timer = try std.time.Timer.start(),
+            .current = 0,
+        };
+    }
+
+    pub fn tick(self: *Spinner) void {
+        std.debug.print("\r{s} {s}", .{self.frames[self.current], self.message});
+        self.current = (self.current + 1) % self.frames.len;
+    }
+
+    pub fn stop(self: *Spinner, message: []const u8) void {
+        _ = self;
+        std.debug.print("\r✓ {s}\n", .{message});
+    }
+};
+

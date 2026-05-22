@@ -85,6 +85,24 @@ pub const methods = struct {
             std.debug.print("Getting {s}...\n", .{key});
             return true;
         }
+
+        // Handler for the "process" command (demonstrates the spinner)
+        pub fn longRunningCommandFn(_: []const cli.option) bool {
+            var spinner = cli.Spinner.init("Processing...") catch |err| {
+                std.debug.print("Failed to initialize spinner: {}\n", .{err});
+                return false;
+            };
+
+            // Simulate work
+            var i: usize = 0;
+            while (i < 50) : (i += 1) {
+                spinner.tick();
+                std.Thread.sleep(100 * std.time.ns_per_ms);
+            }
+
+            spinner.stop("Done processing!");
+            return true;
+        }
     };
 
     pub const options = struct {
