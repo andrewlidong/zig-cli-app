@@ -179,3 +179,59 @@ pub fn startWithArgs(commands: []const command, options: []const option, args: a
     if(debug) std.debug.print("Command executed successfully: {s}\n", .{cmd.name});
 }
 
+pub const Color = enum {
+    Reset,
+    Black,
+    Red,
+    Green,
+    Yellow,
+    Blue,
+    Magenta,
+    Cyan,
+    White,
+
+    pub fn ansiCode(self: Color) []const u8 {
+        return switch (self) {
+            .Reset => "\x1b[0m",
+            .Black => "\x1b[30m",
+            .Red => "\x1b[31m",
+            .Green => "\x1b[32m",
+            .Yellow => "\x1b[33m",
+            .Blue => "\x1b[34m",
+            .Magenta => "\x1b[35m",
+            .Cyan => "\x1b[36m",
+            .White => "\x1b[37m",
+        };
+    }
+};
+
+pub fn printColored(color: Color, comptime fmt: []const u8, args: anytype) void {
+    std.debug.print("{s}" ++ fmt ++ "{s}", .{color.ansiCode()} ++ args ++ .{Color.Reset.ansiCode()});
+}
+
+pub const Spinner = struct {
+    frames: []const []const u8,
+    current: usize = 0,
+    message: []const u8,
+    timer: std.time.Timer,
+
+    pub fn init(message: []const u8) !Spinner {
+        return Spinner{
+            .frames = &[_][]const u8{ "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" },
+            .message = message,
+            .timer = try std.time.Timer.start(),
+            .current = 0,
+        };
+    }
+
+    pub fn tick(self: *Spinner) void {
+        std.debug.print("\r{s} {s}", .{self.frames[self.current], self.message});
+        self.current = (self.current + 1) % self.frames.len;
+    }
+
+    pub fn stop(self: *Spinner, message: []const u8) void {
+        _ = self;
+        std.debug.print("\r✓ {s}\n", .{message});
+    }
+};
+
