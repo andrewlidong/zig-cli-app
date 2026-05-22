@@ -7,15 +7,17 @@ const Description = struct {
 };
 
 const command_descriptions = [_]Description{
-    .{ .name = "hello",       .desc = "Greet someone" },
-    .{ .name = "help",        .desc = "Show help message" },
-    .{ .name = "user:create", .desc = "Create a user" },
-    .{ .name = "user:list",   .desc = "List users" },
-    .{ .name = "config:set",  .desc = "Set a config value" },
-    .{ .name = "config:get",  .desc = "Get a config value" },
-    .{ .name = "process",     .desc = "Run a spinner demo" },
-    .{ .name = "interactive", .desc = "Launch interactive menu" },
-    .{ .name = "completion",  .desc = "Generate shell completion script" },
+    .{ .name = "hello",         .desc = "Greet someone" },
+    .{ .name = "help",          .desc = "Show help message" },
+    .{ .name = "user:create",   .desc = "Create a user" },
+    .{ .name = "user:list",     .desc = "List users" },
+    .{ .name = "config:set",    .desc = "Set a config value" },
+    .{ .name = "config:get",    .desc = "Get a config value" },
+    .{ .name = "config:list",   .desc = "List all config values" },
+    .{ .name = "config:delete", .desc = "Delete a config value" },
+    .{ .name = "process",       .desc = "Run a spinner demo" },
+    .{ .name = "interactive",   .desc = "Launch interactive menu" },
+    .{ .name = "completion",    .desc = "Generate shell completion script" },
 };
 
 const option_descriptions = [_]Description{

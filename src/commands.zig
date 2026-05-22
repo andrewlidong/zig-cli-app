@@ -1,6 +1,7 @@
 const std = @import("std");
 const cli = @import("cli.zig");
 const interactive = @import("interactive.zig");
+const config = @import("config.zig");
 
 pub const methods = struct {
     pub const commands = struct {
@@ -37,6 +38,8 @@ pub const methods = struct {
                 "  user:list       List users\n" ++
                 "  config:set      Set a config value (requires --key and --value)\n" ++
                 "  config:get      Get a config value (requires --key)\n" ++
+                "  config:list     List all config values\n" ++
+                "  config:delete   Delete a config value (requires --key)\n" ++
                 "  process         Run a ~5s spinner demo\n" ++
                 "  interactive     Launch arrow-key driven menu\n" ++
                 "  completion      Generate shell completion script (bash|zsh|fish)\n" ++
@@ -76,7 +79,28 @@ pub const methods = struct {
                 if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
                 if (std.mem.eql(u8, opt.name, "value")) value = opt.value;
             }
-            std.debug.print("Setting {s} = {s}\n", .{key, value});
+
+            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+            defer _ = gpa.deinit();
+            const allocator = gpa.allocator();
+
+            var cfg = config.Config.load(allocator) catch |err| {
+                cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
+                return false;
+            };
+            defer cfg.deinit();
+
+            cfg.set(key, value) catch |err| {
+                cli.printColored(.Red, "Failed to set: {s}\n", .{@errorName(err)});
+                return false;
+            };
+
+            cfg.save() catch |err| {
+                cli.printColored(.Red, "Failed to save config: {s}\n", .{@errorName(err)});
+                return false;
+            };
+
+            cli.printColored(.Green, "Set {s} = {s}\n", .{ key, value });
             return true;
         }
 
@@ -86,7 +110,93 @@ pub const methods = struct {
             for (_options) |opt| {
                 if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
             }
-            std.debug.print("Getting {s}...\n", .{key});
+
+            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+            defer _ = gpa.deinit();
+            const allocator = gpa.allocator();
+
+            var cfg = config.Config.load(allocator) catch |err| {
+                cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
+                return false;
+            };
+            defer cfg.deinit();
+
+            const value = cfg.get(key) catch |err| {
+                cli.printColored(.Red, "Failed to get: {s}\n", .{@errorName(err)});
+                return false;
+            };
+
+            if (value) |v| {
+                cli.printColored(.Cyan, "{s}\n", .{v});
+            } else {
+                cli.printColored(.Yellow, "(not set)\n", .{});
+            }
+            return true;
+        }
+
+        // Handler for the "config:list" command
+        pub fn configListFn(_: []const cli.option) bool {
+            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+            defer _ = gpa.deinit();
+            const allocator = gpa.allocator();
+
+            var cfg = config.Config.load(allocator) catch |err| {
+                cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
+                return false;
+            };
+            defer cfg.deinit();
+
+            if (cfg.isEmpty()) {
+                cli.printColored(.Yellow, "(no config set)\n", .{});
+                return true;
+            }
+
+            var section_it = cfg.sections.iterator();
+            while (section_it.next()) |entry| {
+                cli.printColored(.Magenta, "[{s}]\n", .{entry.key_ptr.*});
+                var kv_it = entry.value_ptr.iterator();
+                while (kv_it.next()) |kv| {
+                    cli.printColored(.Cyan, "  {s}", .{kv.key_ptr.*});
+                    std.debug.print(" = ", .{});
+                    cli.printColored(.Green, "{s}\n", .{kv.value_ptr.*});
+                }
+            }
+            return true;
+        }
+
+        // Handler for the "config:delete" command
+        pub fn configDeleteFn(_options: []const cli.option) bool {
+            var key: []const u8 = "";
+            for (_options) |opt| {
+                if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
+            }
+
+            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+            defer _ = gpa.deinit();
+            const allocator = gpa.allocator();
+
+            var cfg = config.Config.load(allocator) catch |err| {
+                cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
+                return false;
+            };
+            defer cfg.deinit();
+
+            const removed = cfg.delete(key) catch |err| {
+                cli.printColored(.Red, "Failed to delete: {s}\n", .{@errorName(err)});
+                return false;
+            };
+
+            if (!removed) {
+                cli.printColored(.Yellow, "{s} was not set\n", .{key});
+                return true;
+            }
+
+            cfg.save() catch |err| {
+                cli.printColored(.Red, "Failed to save config: {s}\n", .{@errorName(err)});
+                return false;
+            };
+
+            cli.printColored(.Green, "Deleted {s}\n", .{key});
             return true;
         }
 
@@ -123,6 +233,8 @@ pub const methods = struct {
                 "List users",
                 "Set a config value",
                 "Get a config value",
+                "List config values",
+                "Delete a config value",
                 "Run a long process (spinner)",
                 "Show help",
                 "Exit",
@@ -169,8 +281,10 @@ pub const methods = struct {
                 2 => _ = userListFn(&.{}),
                 3 => try runConfigSet(allocator),
                 4 => try runConfigGet(allocator),
-                5 => _ = longRunningCommandFn(&.{}),
-                6 => _ = helpFn(&.{}),
+                5 => _ = configListFn(&.{}),
+                6 => try runConfigDelete(allocator),
+                7 => _ = longRunningCommandFn(&.{}),
+                8 => _ = helpFn(&.{}),
                 else => {},
             }
         }
@@ -219,6 +333,16 @@ pub const methods = struct {
                 .{ .name = "key", .short = 'k', .long = "key", .value = key },
             };
             _ = configGetFn(&opts);
+        }
+
+        fn runConfigDelete(allocator: std.mem.Allocator) !void {
+            const key = try interactive.promptText(allocator, "Key");
+            defer allocator.free(key);
+
+            const opts = [_]cli.option{
+                .{ .name = "key", .short = 'k', .long = "key", .value = key },
+            };
+            _ = configDeleteFn(&opts);
         }
     };
 
