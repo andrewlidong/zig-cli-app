@@ -36,6 +36,15 @@ pub fn main() !void {
             .func = &cmd.methods.commands.configGetFn,
             .req = &.{"key"},
         },
+        cli.command{
+            .name = "config:list",
+            .func = &cmd.methods.commands.configListFn,
+        },
+        cli.command{
+            .name = "config:delete",
+            .func = &cmd.methods.commands.configDeleteFn,
+            .req = &.{"key"},
+        },
         // Demo of the Spinner from cli.zig
         cli.command{
             .name = "process",
@@ -84,4 +93,8 @@ pub fn main() !void {
 
     // Start the CLI application
     try cli.start(&commands, &options, true);
+}
+
+test {
+    _ = @import("config.zig");
 }
