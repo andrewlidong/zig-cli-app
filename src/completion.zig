@@ -2,40 +2,6 @@ const std = @import("std");
 const cli = @import("cli.zig");
 const runtime = @import("runtime.zig");
 
-const Description = struct {
-    name: []const u8,
-    desc: []const u8,
-};
-
-const command_descriptions = [_]Description{
-    .{ .name = "hello",         .desc = "Greet someone" },
-    .{ .name = "help",          .desc = "Show help message" },
-    .{ .name = "user:create",   .desc = "Create a user" },
-    .{ .name = "user:list",     .desc = "List users" },
-    .{ .name = "config:set",    .desc = "Set a config value" },
-    .{ .name = "config:get",    .desc = "Get a config value" },
-    .{ .name = "config:list",   .desc = "List all config values" },
-    .{ .name = "config:delete", .desc = "Delete a config value" },
-    .{ .name = "process",       .desc = "Run a spinner demo" },
-    .{ .name = "interactive",   .desc = "Launch interactive menu" },
-    .{ .name = "completion",    .desc = "Generate shell completion script" },
-};
-
-const option_descriptions = [_]Description{
-    .{ .name = "name",     .desc = "Name to greet" },
-    .{ .name = "greeting", .desc = "Greeting word" },
-    .{ .name = "username", .desc = "Username" },
-    .{ .name = "key",      .desc = "Config key" },
-    .{ .name = "value",    .desc = "Config value" },
-};
-
-fn descFor(table: []const Description, name: []const u8) []const u8 {
-    for (table) |entry| {
-        if (std.mem.eql(u8, entry.name, name)) return entry.desc;
-    }
-    return "";
-}
-
 fn findOption(options: []const cli.option, name: []const u8) ?cli.option {
     for (options) |opt| {
         if (std.mem.eql(u8, opt.name, name)) return opt;
@@ -151,15 +117,15 @@ fn writeZsh(w: *std.Io.Writer, commands: []const cli.command, options: []const c
     );
 
     for (commands) |c| {
-        const desc = descFor(&command_descriptions, c.name);
         try w.writeAll("        '");
         for (c.name) |ch| {
             if (ch == ':') try w.writeAll("\\");
             try w.print("{c}", .{ch});
         }
-        try w.print(":{s}'\n", .{desc});
+        try w.print(":{s}'\n", .{c.desc});
     }
     try w.writeAll("        'completion:Generate shell completion script'\n");
+    try w.writeAll("        'docs:Generate usage documentation'\n");
     try w.writeAll("    )\n\n");
 
     try w.writeAll(
@@ -180,22 +146,20 @@ fn writeZsh(w: *std.Io.Writer, commands: []const cli.command, options: []const c
         for (c.req) |opt_name| {
             if (findOption(options, opt_name)) |o| {
                 emitted += 1;
-                const o_desc = descFor(&option_descriptions, o.name);
                 const sep: []const u8 = if (emitted < total) " \\" else "";
                 try w.print(
                     "                '(-{c} --{s})'{{-{c},--{s}}}'[{s}]:{s}:'{s}\n",
-                    .{ o.short, o.long, o.short, o.long, o_desc, o.name, sep },
+                    .{ o.short, o.long, o.short, o.long, o.desc, o.name, sep },
                 );
             }
         }
         for (c.opt) |opt_name| {
             if (findOption(options, opt_name)) |o| {
                 emitted += 1;
-                const o_desc = descFor(&option_descriptions, o.name);
                 const sep: []const u8 = if (emitted < total) " \\" else "";
                 try w.print(
                     "                '(-{c} --{s})'{{-{c},--{s}}}'[{s}]:{s}:'{s}\n",
-                    .{ o.short, o.long, o.short, o.long, o_desc, o.name, sep },
+                    .{ o.short, o.long, o.short, o.long, o.desc, o.name, sep },
                 );
             }
         }
@@ -205,6 +169,9 @@ fn writeZsh(w: *std.Io.Writer, commands: []const cli.command, options: []const c
     try w.writeAll(
         \\        completion)
         \\            _values 'shell' bash zsh fish
+        \\            ;;
+        \\        docs)
+        \\            _values 'format' markdown man text all
         \\            ;;
         \\    esac
         \\}
@@ -223,36 +190,35 @@ fn writeFish(w: *std.Io.Writer, commands: []const cli.command, options: []const 
     );
 
     for (commands) |c| {
-        const desc = descFor(&command_descriptions, c.name);
         try w.print(
             "complete -c cli -n '__fish_use_subcommand' -a '{s}' -d '{s}'\n",
-            .{ c.name, desc },
+            .{ c.name, c.desc },
         );
     }
-    try w.writeAll("complete -c cli -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion script'\n\n");
+    try w.writeAll("complete -c cli -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion script'\n");
+    try w.writeAll("complete -c cli -n '__fish_use_subcommand' -a 'docs' -d 'Generate usage documentation'\n\n");
 
     for (commands) |c| {
         for (c.req) |opt_name| {
             if (findOption(options, opt_name)) |o| {
-                const o_desc = descFor(&option_descriptions, o.name);
                 try w.print(
                     "complete -c cli -n '__fish_seen_subcommand_from {s}' -s {c} -l {s} -d '{s}' -r\n",
-                    .{ c.name, o.short, o.long, o_desc },
+                    .{ c.name, o.short, o.long, o.desc },
                 );
             }
         }
         for (c.opt) |opt_name| {
             if (findOption(options, opt_name)) |o| {
-                const o_desc = descFor(&option_descriptions, o.name);
                 try w.print(
                     "complete -c cli -n '__fish_seen_subcommand_from {s}' -s {c} -l {s} -d '{s}' -r\n",
-                    .{ c.name, o.short, o.long, o_desc },
+                    .{ c.name, o.short, o.long, o.desc },
                 );
             }
         }
     }
 
     try w.writeAll("\ncomplete -c cli -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'\n");
+    try w.writeAll("complete -c cli -n '__fish_seen_subcommand_from docs' -a 'markdown man text all'\n");
 }
 
 // --- tests ---
@@ -264,13 +230,13 @@ fn noopCmdFn(_: []const cli.option) bool {
 }
 
 const test_commands = [_]cli.command{
-    .{ .name = "hello", .func = &noopCmdFn, .req = &.{"greeting"}, .opt = &.{"name"} },
-    .{ .name = "user:list", .func = &noopCmdFn },
+    .{ .name = "hello", .func = &noopCmdFn, .req = &.{"greeting"}, .opt = &.{"name"}, .desc = "Greet someone" },
+    .{ .name = "user:list", .func = &noopCmdFn, .desc = "List users" },
 };
 
 const test_options = [_]cli.option{
-    .{ .name = "name", .short = 'n', .long = "name" },
-    .{ .name = "greeting", .short = 'g', .long = "greeting" },
+    .{ .name = "name", .short = 'n', .long = "name", .desc = "Name to greet" },
+    .{ .name = "greeting", .short = 'g', .long = "greeting", .desc = "Greeting word" },
 };
 
 test "writeBash: emits command names and option flags" {
@@ -316,10 +282,26 @@ test "writeFish: emits per-command complete lines and subcommand options" {
     try testing.expect(std.mem.indexOf(u8, out, "-s n -l name") != null);
 }
 
-test "descFor: returns description for known name, empty otherwise" {
-    try testing.expectEqualStrings("Greet someone", descFor(&command_descriptions, "hello"));
-    try testing.expectEqualStrings("Config key", descFor(&option_descriptions, "key"));
-    try testing.expectEqualStrings("", descFor(&command_descriptions, "nonexistent"));
+test "writeZsh: emits docs subcommand and format completions" {
+    var aw: std.Io.Writer.Allocating = .init(testing.allocator);
+    defer aw.deinit();
+
+    try writeZsh(&aw.writer, &test_commands, &test_options);
+    const out = aw.written();
+
+    try testing.expect(std.mem.indexOf(u8, out, "'docs:Generate usage documentation'") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "_values 'format' markdown man text all") != null);
+}
+
+test "writeBash: emits descriptions sourced from struct fields" {
+    var aw: std.Io.Writer.Allocating = .init(testing.allocator);
+    defer aw.deinit();
+
+    try writeFish(&aw.writer, &test_commands, &test_options);
+    const out = aw.written();
+
+    try testing.expect(std.mem.indexOf(u8, out, "-d 'Greet someone'") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-d 'Greeting word'") != null);
 }
 
 test "findOption: returns matching option or null" {

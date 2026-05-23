@@ -14,6 +14,7 @@ pub const command = struct {
     func: fnType,                    // Function to execute the command
     req: Slices = &.{},              // Required options
     opt: Slices = &.{},              // Optional options
+    desc: Slice = "",                // One-line human description
     const fnType = *const fn ([]const option) bool;
 };
 
@@ -24,6 +25,7 @@ pub const option = struct {
     short: Byte,                     // Short form, e.g., -n|-N
     long: Slice,                     // Long form, e.g., --name
     value: Slice = "",               // Value of the option
+    desc: Slice = "",                // One-line human description
     const fnType = *const fn (Slice) bool;
 };
 
