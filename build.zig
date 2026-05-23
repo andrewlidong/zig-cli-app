@@ -22,4 +22,13 @@ pub fn build(b: *Build) void {
 
     const test_step         = b.step("test", "Run unit tests");
     test_step.dependOn(&run_exe_tests.step);
+
+    const run_docs          = b.addRunArtifact(exe);
+    run_docs.addArgs(&.{ "docs", "all" });
+    // The docs subcommand writes to ./docs/ relative to the cwd, so run it
+    // from the project root rather than the build cache directory.
+    run_docs.setCwd(b.path("."));
+
+    const docs_step         = b.step("docs", "Regenerate docs/cli.{md,1,txt}");
+    docs_step.dependOn(&run_docs.step);
 }
