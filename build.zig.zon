@@ -1,11 +1,11 @@
 .{
-    .name = .cli,
+    .name = .babyline,
 
     .version = "0.0.0",
 
     .minimum_zig_version = "0.15.0-dev.64+2a4e06bcb",
 
-    .fingerprint = 0x48f6513c420db53a,
+    .fingerprint = 0x9b8378fbf197810c,
 
     .paths = .{
         "build.zig", "build.zig.zon", "src",
