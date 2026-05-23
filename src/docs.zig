@@ -3,6 +3,10 @@ const cli = @import("cli.zig");
 const runtime = @import("runtime.zig");
 
 const docs_dir = "docs";
+const readme_path = "README.md";
+const readme_begin = "<!-- BEGIN GENERATED -->";
+const readme_end = "<!-- END GENERATED -->";
+const readme_max_size: usize = 1024 * 1024;
 
 const Format = enum {
     markdown,
@@ -41,6 +45,7 @@ pub fn run(commands: []const cli.command, options: []const cli.option, args: []c
         try writeFile(.markdown, commands, options);
         try writeFile(.man, commands, options);
         try writeFile(.text, commands, options);
+        try updateReadme(commands, options);
         return;
     }
 
@@ -56,6 +61,7 @@ pub fn run(commands: []const cli.command, options: []const cli.option, args: []c
     };
 
     try writeFile(format, commands, options);
+    if (format == .markdown) try updateReadme(commands, options);
 }
 
 fn writeFile(format: Format, commands: []const cli.command, options: []const cli.option) !void {
@@ -86,6 +92,61 @@ fn writeFile(format: Format, commands: []const cli.command, options: []const cli
     std.debug.print("Wrote {s}\n", .{path});
 }
 
+fn updateReadme(commands: []const cli.command, options: []const cli.option) !void {
+    const io = runtime.io;
+    const allocator = runtime.gpa;
+    const cwd = std.Io.Dir.cwd();
+
+    const file = cwd.openFile(io, readme_path, .{}) catch |err| switch (err) {
+        error.FileNotFound => {
+            std.debug.print("Skipping {s}: file not found\n", .{readme_path});
+            return;
+        },
+        else => return err,
+    };
+    var read_buf: [4096]u8 = undefined;
+    var fr = file.reader(io, &read_buf);
+    const existing = try fr.interface.allocRemaining(allocator, .limited(readme_max_size));
+    file.close(io);
+    defer allocator.free(existing);
+
+    const begin_idx = std.mem.indexOf(u8, existing, readme_begin) orelse {
+        std.debug.print("Skipping {s}: missing {s}\n", .{ readme_path, readme_begin });
+        return;
+    };
+    const end_idx = std.mem.indexOf(u8, existing, readme_end) orelse {
+        std.debug.print("Skipping {s}: missing {s}\n", .{ readme_path, readme_end });
+        return;
+    };
+    if (end_idx < begin_idx) {
+        std.debug.print("Skipping {s}: end marker precedes begin marker\n", .{readme_path});
+        return;
+    }
+
+    const prefix = existing[0 .. begin_idx + readme_begin.len];
+    const suffix = existing[end_idx..];
+
+    var aw: std.Io.Writer.Allocating = .init(allocator);
+    defer aw.deinit();
+    try writeMarkdownReference(&aw.writer, commands, options);
+    const reference = aw.written();
+
+    const out = try cwd.createFile(io, readme_path, .{ .truncate = true });
+    defer out.close(io);
+
+    var write_buf: [4096]u8 = undefined;
+    var fw = out.writer(io, &write_buf);
+    const w = &fw.interface;
+    try w.writeAll(prefix);
+    try w.writeAll("\n\n");
+    try w.writeAll(reference);
+    try w.writeAll("\n");
+    try w.writeAll(suffix);
+    try w.flush();
+
+    std.debug.print("Updated {s}\n", .{readme_path});
+}
+
 fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
         \\# babyline
@@ -98,10 +159,14 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
         \\babyline <command> [options]
         \\```
         \\
-        \\## Commands
-        \\
         \\
     );
+
+    try writeMarkdownReference(w, commands, options);
+}
+
+fn writeMarkdownReference(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
+    try w.writeAll("## Commands\n\n");
 
     for (commands) |c| {
         try w.print("### `{s}`\n\n{s}.\n\n", .{ c.name, c.desc });
@@ -110,7 +175,7 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
             try w.writeAll("**Required options:**\n\n");
             for (c.req) |opt_name| {
                 if (findOption(options, opt_name)) |o| {
-                    try w.print("- `-{c}, --{s} <value>` — {s}\n", .{ o.short, o.long, o.desc });
+                    try w.print("- `-{c}, --{s} <value>` - {s}\n", .{ o.short, o.long, o.desc });
                 }
             }
             try w.writeAll("\n");
@@ -120,7 +185,7 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
             try w.writeAll("**Optional options:**\n\n");
             for (c.opt) |opt_name| {
                 if (findOption(options, opt_name)) |o| {
-                    try w.print("- `-{c}, --{s} <value>` — {s}\n", .{ o.short, o.long, o.desc });
+                    try w.print("- `-{c}, --{s} <value>` - {s}\n", .{ o.short, o.long, o.desc });
                 }
             }
             try w.writeAll("\n");
@@ -212,7 +277,7 @@ fn writeMan(w: *std.Io.Writer, commands: []const cli.command, options: []const c
 
 fn writeText(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\babyline — a small Zig CLI demo with subcommands, persistent config, and shell completion.
+        \\babyline - a small Zig CLI demo with subcommands, persistent config, and shell completion.
         \\
         \\USAGE
         \\    babyline <command> [options]

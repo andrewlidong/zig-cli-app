@@ -16,11 +16,11 @@ Greet someone.
 
 **Required options:**
 
-- `-g, --greeting <value>` — Greeting word
+- `-g, --greeting <value>` - Greeting word
 
 **Optional options:**
 
-- `-n, --name <value>` — Name to greet
+- `-n, --name <value>` - Name to greet
 
 ### `help`
 
@@ -32,7 +32,7 @@ Create a user.
 
 **Required options:**
 
-- `-u, --username <value>` — Username
+- `-u, --username <value>` - Username
 
 ### `user:list`
 
@@ -44,8 +44,8 @@ Set a config value.
 
 **Required options:**
 
-- `-k, --key <value>` — Config key
-- `-v, --value <value>` — Config value
+- `-k, --key <value>` - Config key
+- `-v, --value <value>` - Config value
 
 ### `config:get`
 
@@ -53,7 +53,7 @@ Get a config value.
 
 **Required options:**
 
-- `-k, --key <value>` — Config key
+- `-k, --key <value>` - Config key
 
 ### `config:list`
 
@@ -65,7 +65,7 @@ Delete a config value.
 
 **Required options:**
 
-- `-k, --key <value>` — Config key
+- `-k, --key <value>` - Config key
 
 ### `process`
 
