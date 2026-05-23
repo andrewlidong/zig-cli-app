@@ -11,9 +11,9 @@ const Format = enum {
 
     fn fileName(self: Format) []const u8 {
         return switch (self) {
-            .markdown => "cli.md",
-            .man => "cli.1",
-            .text => "cli.txt",
+            .markdown => "babyline.md",
+            .man => "babyline.1",
+            .text => "babyline.txt",
         };
     }
 };
@@ -26,7 +26,7 @@ fn findOption(options: []const cli.option, name: []const u8) ?cli.option {
 }
 
 fn printUsageErr() void {
-    std.debug.print("Usage: cli docs <markdown|man|text|all>\n", .{});
+    std.debug.print("Usage: babyline docs <markdown|man|text|all>\n", .{});
 }
 
 pub fn run(commands: []const cli.command, options: []const cli.option, args: []const [:0]const u8) !void {
@@ -88,14 +88,14 @@ fn writeFile(format: Format, commands: []const cli.command, options: []const cli
 
 fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\# cli
+        \\# babyline
         \\
         \\A small Zig CLI demo with subcommands, persistent config, and shell completion.
         \\
         \\## Synopsis
         \\
         \\```
-        \\cli <command> [options]
+        \\babyline <command> [options]
         \\```
         \\
         \\## Commands
@@ -135,7 +135,7 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
         \\Generate a shell completion script.
         \\
         \\```
-        \\cli completion <bash|zsh|fish>
+        \\babyline completion <bash|zsh|fish>
         \\```
         \\
         \\### `docs`
@@ -143,7 +143,7 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
         \\Generate usage documentation in the `docs/` directory.
         \\
         \\```
-        \\cli docs <markdown|man|text|all>
+        \\babyline docs <markdown|man|text|all>
         \\```
         \\
         \\## All options
@@ -160,11 +160,11 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
 
 fn writeMan(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\.TH CLI 1 "" "" "cli manual"
+        \\.TH BABYLINE 1 "" "" "babyline manual"
         \\.SH NAME
-        \\cli \- a small Zig CLI demo
+        \\babyline \- a small Zig CLI demo
         \\.SH SYNOPSIS
-        \\.B cli
+        \\.B babyline
         \\.I command
         \\.RI [ options ]
         \\.SH DESCRIPTION
@@ -212,10 +212,10 @@ fn writeMan(w: *std.Io.Writer, commands: []const cli.command, options: []const c
 
 fn writeText(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\cli — a small Zig CLI demo with subcommands, persistent config, and shell completion.
+        \\babyline — a small Zig CLI demo with subcommands, persistent config, and shell completion.
         \\
         \\USAGE
-        \\    cli <command> [options]
+        \\    babyline <command> [options]
         \\
         \\COMMANDS
         \\
@@ -283,7 +283,7 @@ test "writeMarkdown: emits headers, command sections, options table" {
     try writeMarkdown(&aw.writer, &test_commands, &test_options);
     const out = aw.written();
 
-    try testing.expect(std.mem.indexOf(u8, out, "# cli") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "# babyline") != null);
     try testing.expect(std.mem.indexOf(u8, out, "### `hello`") != null);
     try testing.expect(std.mem.indexOf(u8, out, "### `user:list`") != null);
     try testing.expect(std.mem.indexOf(u8, out, "Greet someone.") != null);
@@ -299,7 +299,7 @@ test "writeMan: emits troff headers and command/option sections" {
     try writeMan(&aw.writer, &test_commands, &test_options);
     const out = aw.written();
 
-    try testing.expect(std.mem.indexOf(u8, out, ".TH CLI 1") != null);
+    try testing.expect(std.mem.indexOf(u8, out, ".TH BABYLINE 1") != null);
     try testing.expect(std.mem.indexOf(u8, out, ".SH NAME") != null);
     try testing.expect(std.mem.indexOf(u8, out, ".SH SYNOPSIS") != null);
     try testing.expect(std.mem.indexOf(u8, out, ".SH COMMANDS") != null);
@@ -324,9 +324,9 @@ test "writeText: emits USAGE, COMMANDS, OPTIONS sections" {
 }
 
 test "Format.fileName: maps each variant to its file" {
-    try testing.expectEqualStrings("cli.md", Format.markdown.fileName());
-    try testing.expectEqualStrings("cli.1", Format.man.fileName());
-    try testing.expectEqualStrings("cli.txt", Format.text.fileName());
+    try testing.expectEqualStrings("babyline.md", Format.markdown.fileName());
+    try testing.expectEqualStrings("babyline.1", Format.man.fileName());
+    try testing.expectEqualStrings("babyline.txt", Format.text.fileName());
 }
 
 test "findOption: returns matching option or null" {

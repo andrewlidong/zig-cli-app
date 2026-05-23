@@ -10,7 +10,7 @@ fn findOption(options: []const cli.option, name: []const u8) ?cli.option {
 }
 
 fn printUsageErr() void {
-    std.debug.print("Usage: cli completion <bash|zsh|fish>\n", .{});
+    std.debug.print("Usage: babyline completion <bash|zsh|fish>\n", .{});
 }
 
 pub fn run(commands: []const cli.command, options: []const cli.option, args: []const [:0]const u8) !void {
@@ -41,8 +41,8 @@ pub fn run(commands: []const cli.command, options: []const cli.option, args: []c
 
 fn writeBash(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\# bash completion for cli
-        \\_cli_complete() {
+        \\# bash completion for babyline
+        \\_babyline_complete() {
         \\    local cur cmd opts
         \\    COMP_WORDBREAKS="${COMP_WORDBREAKS//:/}"
         \\    cur="${COMP_WORDS[COMP_CWORD]}"
@@ -101,16 +101,16 @@ fn writeBash(w: *std.Io.Writer, commands: []const cli.command, options: []const 
         \\    COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
         \\    return 0
         \\}
-        \\complete -F _cli_complete cli
+        \\complete -F _babyline_complete babyline
         \\
     );
 }
 
 fn writeZsh(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\#compdef cli
+        \\#compdef babyline
         \\
-        \\_cli() {
+        \\_babyline() {
         \\    local -a commands
         \\    commands=(
         \\
@@ -176,33 +176,33 @@ fn writeZsh(w: *std.Io.Writer, commands: []const cli.command, options: []const c
         \\    esac
         \\}
         \\
-        \\_cli "$@"
+        \\_babyline "$@"
         \\
     );
 }
 
 fn writeFish(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\# fish completion for cli
-        \\complete -c cli -f
+        \\# fish completion for babyline
+        \\complete -c babyline -f
         \\
         \\
     );
 
     for (commands) |c| {
         try w.print(
-            "complete -c cli -n '__fish_use_subcommand' -a '{s}' -d '{s}'\n",
+            "complete -c babyline -n '__fish_use_subcommand' -a '{s}' -d '{s}'\n",
             .{ c.name, c.desc },
         );
     }
-    try w.writeAll("complete -c cli -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion script'\n");
-    try w.writeAll("complete -c cli -n '__fish_use_subcommand' -a 'docs' -d 'Generate usage documentation'\n\n");
+    try w.writeAll("complete -c babyline -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell completion script'\n");
+    try w.writeAll("complete -c babyline -n '__fish_use_subcommand' -a 'docs' -d 'Generate usage documentation'\n\n");
 
     for (commands) |c| {
         for (c.req) |opt_name| {
             if (findOption(options, opt_name)) |o| {
                 try w.print(
-                    "complete -c cli -n '__fish_seen_subcommand_from {s}' -s {c} -l {s} -d '{s}' -r\n",
+                    "complete -c babyline -n '__fish_seen_subcommand_from {s}' -s {c} -l {s} -d '{s}' -r\n",
                     .{ c.name, o.short, o.long, o.desc },
                 );
             }
@@ -210,15 +210,15 @@ fn writeFish(w: *std.Io.Writer, commands: []const cli.command, options: []const 
         for (c.opt) |opt_name| {
             if (findOption(options, opt_name)) |o| {
                 try w.print(
-                    "complete -c cli -n '__fish_seen_subcommand_from {s}' -s {c} -l {s} -d '{s}' -r\n",
+                    "complete -c babyline -n '__fish_seen_subcommand_from {s}' -s {c} -l {s} -d '{s}' -r\n",
                     .{ c.name, o.short, o.long, o.desc },
                 );
             }
         }
     }
 
-    try w.writeAll("\ncomplete -c cli -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'\n");
-    try w.writeAll("complete -c cli -n '__fish_seen_subcommand_from docs' -a 'markdown man text all'\n");
+    try w.writeAll("\ncomplete -c babyline -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'\n");
+    try w.writeAll("complete -c babyline -n '__fish_seen_subcommand_from docs' -a 'markdown man text all'\n");
 }
 
 // --- tests ---
@@ -246,12 +246,12 @@ test "writeBash: emits command names and option flags" {
     try writeBash(&aw.writer, &test_commands, &test_options);
     const out = aw.written();
 
-    try testing.expect(std.mem.indexOf(u8, out, "_cli_complete") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "_babyline_complete") != null);
     try testing.expect(std.mem.indexOf(u8, out, "hello") != null);
     try testing.expect(std.mem.indexOf(u8, out, "user:list") != null);
     try testing.expect(std.mem.indexOf(u8, out, "-g --greeting") != null);
     try testing.expect(std.mem.indexOf(u8, out, "-n --name") != null);
-    try testing.expect(std.mem.indexOf(u8, out, "complete -F _cli_complete cli") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "complete -F _babyline_complete babyline") != null);
 }
 
 test "writeZsh: emits compdef header and escaped colon commands" {
@@ -261,7 +261,7 @@ test "writeZsh: emits compdef header and escaped colon commands" {
     try writeZsh(&aw.writer, &test_commands, &test_options);
     const out = aw.written();
 
-    try testing.expect(std.mem.indexOf(u8, out, "#compdef cli") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "#compdef babyline") != null);
     try testing.expect(std.mem.indexOf(u8, out, "user\\:list") != null);
     try testing.expect(std.mem.indexOf(u8, out, "-g --greeting") != null);
     try testing.expect(std.mem.indexOf(u8, out, "_values 'shell' bash zsh fish") != null);
@@ -274,7 +274,7 @@ test "writeFish: emits per-command complete lines and subcommand options" {
     try writeFish(&aw.writer, &test_commands, &test_options);
     const out = aw.written();
 
-    try testing.expect(std.mem.indexOf(u8, out, "complete -c cli -f") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "complete -c babyline -f") != null);
     try testing.expect(std.mem.indexOf(u8, out, "-a 'hello'") != null);
     try testing.expect(std.mem.indexOf(u8, out, "-a 'user:list'") != null);
     try testing.expect(std.mem.indexOf(u8, out, "__fish_seen_subcommand_from hello") != null);

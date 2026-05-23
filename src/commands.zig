@@ -31,7 +31,7 @@ pub const methods = struct {
         // Handler for the "help" command
         pub fn helpFn(_: []const cli.option) bool {
             std.debug.print(
-                "Usage: my-cli <command> [options]\n" ++
+                "Usage: babyline <command> [options]\n" ++
                 "Commands:\n" ++
                 "  hello           Greet someone\n" ++
                 "  help            Show this help message\n" ++
@@ -44,6 +44,7 @@ pub const methods = struct {
                 "  process         Run a ~5s spinner demo\n" ++
                 "  interactive     Launch arrow-key driven menu\n" ++
                 "  completion      Generate shell completion script (bash|zsh|fish)\n" ++
+                "  docs            Generate usage documentation (markdown|man|text|all)\n" ++
                 "\n" ++
                 "Options:\n" ++
                 "  -n, --name <value>       Name to greet\n" ++

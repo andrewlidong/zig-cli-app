@@ -1,11 +1,11 @@
-# cli
+# babyline
 
 A small Zig CLI demo with subcommands, persistent config, and shell completion.
 
 ## Synopsis
 
 ```
-cli <command> [options]
+babyline <command> [options]
 ```
 
 ## Commands
@@ -82,7 +82,7 @@ Launch arrow-key driven menu.
 Generate a shell completion script.
 
 ```
-cli completion <bash|zsh|fish>
+babyline completion <bash|zsh|fish>
 ```
 
 ### `docs`
@@ -90,7 +90,7 @@ cli completion <bash|zsh|fish>
 Generate usage documentation in the `docs/` directory.
 
 ```
-cli docs <markdown|man|text|all>
+babyline docs <markdown|man|text|all>
 ```
 
 ## All options
