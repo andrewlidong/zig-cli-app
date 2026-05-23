@@ -1,0 +1,31 @@
+cli — a small Zig CLI demo with subcommands, persistent config, and shell completion.
+
+USAGE
+    cli <command> [options]
+
+COMMANDS
+    hello            Greet someone
+        required: -g, --greeting
+        optional: -n, --name
+    help             Show this help message
+    user:create      Create a user
+        required: -u, --username
+    user:list        List users
+    config:set       Set a config value
+        required: -k, --key, -v, --value
+    config:get       Get a config value
+        required: -k, --key
+    config:list      List all config values
+    config:delete    Delete a config value
+        required: -k, --key
+    process          Run a ~5s spinner demo
+    interactive      Launch arrow-key driven menu
+    completion       Generate shell completion script (bash|zsh|fish)
+    docs             Generate usage documentation (markdown|man|text|all)
+
+OPTIONS
+    -n, --name         Name to greet
+    -g, --greeting     Greeting word
+    -u, --username     Username
+    -k, --key          Config key
+    -v, --value        Config value
