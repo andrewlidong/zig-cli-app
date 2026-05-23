@@ -39,8 +39,8 @@ pub const Error = error{
     TooManyOptions,
 };
 
-/// Starts the CLI application.
-pub fn start(commands: []const command, options: []const option, debug: bool) !void {
+/// Starts the CLI application with provided arguments.
+pub fn startWithArgs(commands: []const command, options: []const option, args: anytype, debug: bool) !void {
     if (commands.len > MAX_COMMANDS) {
         return error.TooManyCommands;
     }
@@ -48,20 +48,6 @@ pub fn start(commands: []const command, options: []const option, debug: bool) !v
         return error.TooManyOptions;
     }
 
-    // Create a general-purpose allocator for managing memory during execution
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    // Retrieve the command-line arguments in a cross-platform manner
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
-
-    try startWithArgs(commands, options, args, debug);
-}
-
-/// Starts the CLI application with provided arguments.
-pub fn startWithArgs(commands: []const command, options: []const option, args: anytype, debug: bool) !void {
     if (args.len < 2) {
         if(debug) std.debug.print("No command provided by user!\n", .{});
         return Error.NoArgsProvided;
@@ -213,13 +199,11 @@ pub const Spinner = struct {
     frames: []const []const u8,
     current: usize = 0,
     message: []const u8,
-    timer: std.time.Timer,
 
-    pub fn init(message: []const u8) !Spinner {
+    pub fn init(message: []const u8) Spinner {
         return Spinner{
             .frames = &[_][]const u8{ "⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏" },
             .message = message,
-            .timer = try std.time.Timer.start(),
             .current = 0,
         };
     }

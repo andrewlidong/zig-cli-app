@@ -1,4 +1,5 @@
 const std = @import("std");
+const runtime = @import("runtime.zig");
 
 pub const Error = error{
     InvalidKey,
@@ -134,13 +135,16 @@ pub const Config = struct {
         const path = try configPath(allocator);
         defer allocator.free(path);
 
-        const file = std.fs.openFileAbsolute(path, .{}) catch |err| switch (err) {
+        const io = runtime.io;
+        const file = std.Io.Dir.openFileAbsolute(io, path, .{}) catch |err| switch (err) {
             error.FileNotFound => return Config.init(allocator),
             else => return err,
         };
-        defer file.close();
+        defer file.close(io);
 
-        const contents = try file.readToEndAlloc(allocator, max_file_size);
+        var read_buf: [4096]u8 = undefined;
+        var fr = file.reader(io, &read_buf);
+        const contents = try fr.interface.allocRemaining(allocator, .limited(max_file_size));
         defer allocator.free(contents);
 
         return parse(allocator, contents);
@@ -150,7 +154,7 @@ pub const Config = struct {
         const path = try configPath(self.allocator);
         defer self.allocator.free(path);
 
-        var buf: std.ArrayList(u8) = .{};
+        var buf: std.ArrayList(u8) = .empty;
         defer buf.deinit(self.allocator);
 
         try buf.appendSlice(self.allocator, "# auto-managed by cli\n");
@@ -171,40 +175,35 @@ pub const Config = struct {
             }
         }
 
+        const io = runtime.io;
         if (std.fs.path.dirname(path)) |dir| {
-            try std.fs.cwd().makePath(dir);
+            std.Io.Dir.cwd().createDirPath(io, dir) catch |err| switch (err) {
+                error.PathAlreadyExists => {},
+                else => return err,
+            };
         }
 
         const tmp_path = try std.fmt.allocPrint(self.allocator, "{s}.tmp", .{path});
         defer self.allocator.free(tmp_path);
 
         {
-            const tmp_file = try std.fs.createFileAbsolute(tmp_path, .{ .truncate = true });
-            defer tmp_file.close();
-            try tmp_file.writeAll(buf.items);
+            const tmp_file = try std.Io.Dir.createFileAbsolute(io, tmp_path, .{ .truncate = true });
+            defer tmp_file.close(io);
+            try tmp_file.writeStreamingAll(io, buf.items);
         }
 
-        try std.fs.renameAbsolute(tmp_path, path);
+        try std.Io.Dir.renameAbsolute(tmp_path, path, io);
     }
 };
 
 pub fn configPath(allocator: std.mem.Allocator) ![]u8 {
-    if (std.process.getEnvVarOwned(allocator, "XDG_CONFIG_HOME")) |xdg| {
-        defer allocator.free(xdg);
+    if (runtime.environ.getPosix("XDG_CONFIG_HOME")) |xdg| {
         if (xdg.len > 0) {
             return try std.fs.path.join(allocator, &.{ xdg, "cli", "config" });
         }
-    } else |err| switch (err) {
-        error.EnvironmentVariableNotFound => {},
-        else => return err,
     }
 
-    const home = std.process.getEnvVarOwned(allocator, "HOME") catch |err| switch (err) {
-        error.EnvironmentVariableNotFound => return Error.HomeNotFound,
-        else => return err,
-    };
-    defer allocator.free(home);
-
+    const home = runtime.environ.getPosix("HOME") orelse return Error.HomeNotFound;
     return try std.fs.path.join(allocator, &.{ home, ".config", "cli", "config" });
 }
 
@@ -261,7 +260,7 @@ fn readQuoted(allocator: std.mem.Allocator, src: []const u8) ![]u8 {
     if (src.len < 2 or src[0] != '"' or src[src.len - 1] != '"') return Error.MalformedConfig;
     const inner = src[1 .. src.len - 1];
 
-    var result: std.ArrayList(u8) = .{};
+    var result: std.ArrayList(u8) = .empty;
     defer result.deinit(allocator);
 
     var i: usize = 0;
@@ -377,7 +376,7 @@ test "parse: malformed input rejected" {
 }
 
 test "appendQuoted/readQuoted: roundtrip" {
-    var buf: std.ArrayList(u8) = .{};
+    var buf: std.ArrayList(u8) = .empty;
     defer buf.deinit(std.testing.allocator);
 
     const input = "hello \"world\"\nand\\backslash";

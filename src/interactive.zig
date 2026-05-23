@@ -1,5 +1,6 @@
 const std = @import("std");
 const cli = @import("cli.zig");
+const runtime = @import("runtime.zig");
 
 pub const Error = error{
     Cancelled,
@@ -26,7 +27,9 @@ pub const RawMode = struct {
 
     pub fn enter() !RawMode {
         const fd = std.posix.STDIN_FILENO;
-        if (!std.posix.isatty(fd)) return Error.NotATerminal;
+        const stdin_file: std.Io.File = .{ .handle = fd, .flags = .{ .nonblocking = false } };
+        const is_tty = stdin_file.isTty(runtime.io) catch return Error.NotATerminal;
+        if (!is_tty) return Error.NotATerminal;
         const original = std.posix.tcgetattr(fd) catch return Error.NotATerminal;
 
         var raw = original;

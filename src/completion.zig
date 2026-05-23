@@ -1,5 +1,6 @@
 const std = @import("std");
 const cli = @import("cli.zig");
+const runtime = @import("runtime.zig");
 
 const Description = struct {
     name: []const u8,
@@ -46,7 +47,7 @@ fn printUsageErr() void {
     std.debug.print("Usage: cli completion <bash|zsh|fish>\n", .{});
 }
 
-pub fn run(commands: []const cli.command, options: []const cli.option, args: []const [:0]u8) !void {
+pub fn run(commands: []const cli.command, options: []const cli.option, args: []const [:0]const u8) !void {
     if (args.len < 3) {
         printUsageErr();
         std.process.exit(1);
@@ -55,7 +56,7 @@ pub fn run(commands: []const cli.command, options: []const cli.option, args: []c
     const shell = args[2];
 
     var buf: [8192]u8 = undefined;
-    var fw = std.fs.File.stdout().writer(&buf);
+    var fw = std.Io.File.stdout().writer(runtime.io, &buf);
     const w = &fw.interface;
 
     if (std.mem.eql(u8, shell, "bash")) {
