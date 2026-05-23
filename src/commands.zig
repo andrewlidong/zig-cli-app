@@ -2,6 +2,7 @@ const std = @import("std");
 const cli = @import("cli.zig");
 const interactive = @import("interactive.zig");
 const config = @import("config.zig");
+const runtime = @import("runtime.zig");
 
 pub const methods = struct {
     pub const commands = struct {
@@ -80,9 +81,7 @@ pub const methods = struct {
                 if (std.mem.eql(u8, opt.name, "value")) value = opt.value;
             }
 
-            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-            defer _ = gpa.deinit();
-            const allocator = gpa.allocator();
+            const allocator = runtime.gpa;
 
             var cfg = config.Config.load(allocator) catch |err| {
                 cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
@@ -111,9 +110,7 @@ pub const methods = struct {
                 if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
             }
 
-            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-            defer _ = gpa.deinit();
-            const allocator = gpa.allocator();
+            const allocator = runtime.gpa;
 
             var cfg = config.Config.load(allocator) catch |err| {
                 cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
@@ -136,9 +133,7 @@ pub const methods = struct {
 
         // Handler for the "config:list" command
         pub fn configListFn(_: []const cli.option) bool {
-            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-            defer _ = gpa.deinit();
-            const allocator = gpa.allocator();
+            const allocator = runtime.gpa;
 
             var cfg = config.Config.load(allocator) catch |err| {
                 cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
@@ -171,9 +166,7 @@ pub const methods = struct {
                 if (std.mem.eql(u8, opt.name, "key")) key = opt.value;
             }
 
-            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-            defer _ = gpa.deinit();
-            const allocator = gpa.allocator();
+            const allocator = runtime.gpa;
 
             var cfg = config.Config.load(allocator) catch |err| {
                 cli.printColored(.Red, "Failed to load config: {s}\n", .{@errorName(err)});
@@ -202,16 +195,13 @@ pub const methods = struct {
 
         // Handler for the "process" command (demonstrates the spinner)
         pub fn longRunningCommandFn(_: []const cli.option) bool {
-            var spinner = cli.Spinner.init("Processing...") catch |err| {
-                std.debug.print("Failed to initialize spinner: {}\n", .{err});
-                return false;
-            };
+            var spinner = cli.Spinner.init("Processing...");
 
             // Simulate work
             var i: usize = 0;
             while (i < 50) : (i += 1) {
                 spinner.tick();
-                std.Thread.sleep(100 * std.time.ns_per_ms);
+                std.Io.sleep(runtime.io, .fromMilliseconds(100), .awake) catch {};
             }
 
             spinner.stop("Done processing!");
@@ -220,9 +210,7 @@ pub const methods = struct {
 
         // Handler for the "interactive" command — arrow-key driven menu.
         pub fn interactiveFn(_: []const cli.option) bool {
-            var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-            defer _ = gpa.deinit();
-            const allocator = gpa.allocator();
+            const allocator = runtime.gpa;
 
             cli.printColored(.Magenta, "\n=== Interactive Mode ===\n", .{});
             cli.printColored(.Yellow, "Use \xe2\x86\x91/\xe2\x86\x93 to navigate, Enter to select, Esc to cancel.\n\n", .{});

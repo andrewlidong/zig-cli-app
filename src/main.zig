@@ -2,6 +2,7 @@ const std = @import("std");
 const cli = @import("cli.zig");
 const cmd = @import("commands.zig");
 const completion = @import("completion.zig");
+const runtime = @import("runtime.zig");
 
 const commands = [_]cli.command{
     cli.command{
@@ -89,13 +90,9 @@ const options = [_]cli.option{
     },
 };
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    const args = try std.process.argsAlloc(allocator);
-    defer std.process.argsFree(allocator, args);
+pub fn main(init: std.process.Init) !void {
+    runtime.init(init);
+    const args = try init.minimal.args.toSlice(init.arena.allocator());
 
     if (args.len >= 2 and std.mem.eql(u8, args[1], "completion")) {
         return completion.run(&commands, &options, args);
