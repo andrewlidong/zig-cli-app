@@ -42,6 +42,7 @@ pub const methods = struct {
                 "  config:delete   Delete a config value (requires --key)\n" ++
                 "  process         Run a ~5s spinner demo\n" ++
                 "  interactive     Launch arrow-key driven menu\n" ++
+                "  completion      Generate shell completion script (bash|zsh|fish)\n" ++
                 "\n" ++
                 "Options:\n" ++
                 "  -n, --name <value>       Name to greet\n" ++
