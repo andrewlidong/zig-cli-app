@@ -1,0 +1,68 @@
+.TH CLI 1 "" "" "cli manual"
+.SH NAME
+cli \- a small Zig CLI demo
+.SH SYNOPSIS
+.B cli
+.I command
+.RI [ options ]
+.SH DESCRIPTION
+A small Zig CLI demo with subcommands, persistent config, and shell completion.
+.SH COMMANDS
+.TP
+.B hello
+Greet someone.
+Required: \-g, \-\-greeting
+Optional: \-n, \-\-name
+.TP
+.B help
+Show this help message.
+.TP
+.B user:create
+Create a user.
+Required: \-u, \-\-username
+.TP
+.B user:list
+List users.
+.TP
+.B config:set
+Set a config value.
+Required: \-k, \-\-key, \-v, \-\-value
+.TP
+.B config:get
+Get a config value.
+Required: \-k, \-\-key
+.TP
+.B config:list
+List all config values.
+.TP
+.B config:delete
+Delete a config value.
+Required: \-k, \-\-key
+.TP
+.B process
+Run a ~5s spinner demo.
+.TP
+.B interactive
+Launch arrow-key driven menu.
+.TP
+.B completion <bash|zsh|fish>
+Generate a shell completion script.
+.TP
+.B docs <markdown|man|text|all>
+Generate usage documentation.
+.SH OPTIONS
+.TP
+.BR \-n ", " \-\-name
+Name to greet
+.TP
+.BR \-g ", " \-\-greeting
+Greeting word
+.TP
+.BR \-u ", " \-\-username
+Username
+.TP
+.BR \-k ", " \-\-key
+Config key
+.TP
+.BR \-v ", " \-\-value
+Config value

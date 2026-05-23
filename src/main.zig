@@ -2,6 +2,7 @@ const std = @import("std");
 const cli = @import("cli.zig");
 const cmd = @import("commands.zig");
 const completion = @import("completion.zig");
+const docs = @import("docs.zig");
 const runtime = @import("runtime.zig");
 
 const commands = [_]cli.command{
@@ -112,6 +113,9 @@ pub fn main(init: std.process.Init) !void {
     if (args.len >= 2 and std.mem.eql(u8, args[1], "completion")) {
         return completion.run(&commands, &options, args);
     }
+    if (args.len >= 2 and std.mem.eql(u8, args[1], "docs")) {
+        return docs.run(&commands, &options, args);
+    }
 
     try cli.startWithArgs(&commands, &options, args, true);
 }
@@ -121,4 +125,5 @@ test {
     _ = @import("cli.zig");
     _ = @import("completion.zig");
     _ = @import("commands.zig");
+    _ = @import("docs.zig");
 }
