@@ -105,4 +105,5 @@ test {
     _ = @import("config.zig");
     _ = @import("cli.zig");
     _ = @import("completion.zig");
+    _ = @import("commands.zig");
 }

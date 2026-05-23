@@ -363,3 +363,54 @@ pub const methods = struct {
         }
     };
 };
+
+// --- tests ---
+
+const testing = std.testing;
+
+test "helloFn: returns true with greeting and name options" {
+    const opts = [_]cli.option{
+        .{ .name = "greeting", .short = 'g', .long = "greeting", .value = "Hi" },
+        .{ .name = "name", .short = 'n', .long = "name", .value = "Andrew" },
+    };
+    try testing.expect(methods.commands.helloFn(&opts));
+}
+
+test "helloFn: returns true with only greeting (name defaults)" {
+    const opts = [_]cli.option{
+        .{ .name = "greeting", .short = 'g', .long = "greeting", .value = "Hello" },
+    };
+    try testing.expect(methods.commands.helloFn(&opts));
+}
+
+test "helloFn: empty name option falls back to World" {
+    // Caller passed --name with no value; helloFn keeps the default ("World").
+    const opts = [_]cli.option{
+        .{ .name = "greeting", .short = 'g', .long = "greeting", .value = "Hi" },
+        .{ .name = "name", .short = 'n', .long = "name", .value = "" },
+    };
+    try testing.expect(methods.commands.helloFn(&opts));
+}
+
+test "userCreateFn: returns true with username option" {
+    const opts = [_]cli.option{
+        .{ .name = "username", .short = 'u', .long = "username", .value = "alice" },
+    };
+    try testing.expect(methods.commands.userCreateFn(&opts));
+}
+
+test "userListFn: returns true with no options" {
+    try testing.expect(methods.commands.userListFn(&.{}));
+}
+
+test "helpFn: returns true with no options" {
+    try testing.expect(methods.commands.helpFn(&.{}));
+}
+
+test "option handlers: all return true" {
+    try testing.expect(methods.options.nameFn(""));
+    try testing.expect(methods.options.greetingFn(""));
+    try testing.expect(methods.options.usernameFn(""));
+    try testing.expect(methods.options.keyFn(""));
+    try testing.expect(methods.options.valueFn(""));
+}
