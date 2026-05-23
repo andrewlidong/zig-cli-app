@@ -219,3 +219,118 @@ pub const Spinner = struct {
     }
 };
 
+// --- tests ---
+
+const testing = std.testing;
+
+const TestState = struct {
+    var call_count: usize = 0;
+    var name_value: []const u8 = "";
+    var should_fail: bool = false;
+
+    fn cmdFn(opts: []const option) bool {
+        call_count += 1;
+        for (opts) |o| {
+            if (std.mem.eql(u8, o.name, "name")) name_value = o.value;
+        }
+        return !should_fail;
+    }
+
+    fn reset() void {
+        call_count = 0;
+        name_value = "";
+        should_fail = false;
+    }
+};
+
+test "Color.ansiCode: maps to expected escape sequences" {
+    try testing.expectEqualStrings("\x1b[0m", Color.Reset.ansiCode());
+    try testing.expectEqualStrings("\x1b[31m", Color.Red.ansiCode());
+    try testing.expectEqualStrings("\x1b[32m", Color.Green.ansiCode());
+    try testing.expectEqualStrings("\x1b[36m", Color.Cyan.ansiCode());
+}
+
+test "startWithArgs: no command provided" {
+    const cmds = [_]command{};
+    const opts = [_]option{};
+    const args = [_][]const u8{"prog"};
+    try testing.expectError(Error.NoArgsProvided, startWithArgs(&cmds, &opts, &args, false));
+}
+
+test "startWithArgs: unknown command" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn }};
+    const opts = [_]option{};
+    const args = [_][]const u8{ "prog", "bogus" };
+    try testing.expectError(Error.UnknownCommand, startWithArgs(&cmds, &opts, &args, false));
+}
+
+test "startWithArgs: known command dispatches" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn }};
+    const opts = [_]option{};
+    const args = [_][]const u8{ "prog", "hello" };
+    try startWithArgs(&cmds, &opts, &args, false);
+    try testing.expectEqual(@as(usize, 1), TestState.call_count);
+}
+
+test "startWithArgs: short option value captured" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn, .opt = &.{"name"} }};
+    const opts = [_]option{.{ .name = "name", .short = 'n', .long = "name" }};
+    const args = [_][]const u8{ "prog", "hello", "-n", "Andrew" };
+    try startWithArgs(&cmds, &opts, &args, false);
+    try testing.expectEqualStrings("Andrew", TestState.name_value);
+}
+
+test "startWithArgs: long option value captured" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn, .opt = &.{"name"} }};
+    const opts = [_]option{.{ .name = "name", .short = 'n', .long = "name" }};
+    const args = [_][]const u8{ "prog", "hello", "--name", "Bob" };
+    try startWithArgs(&cmds, &opts, &args, false);
+    try testing.expectEqualStrings("Bob", TestState.name_value);
+}
+
+test "startWithArgs: unknown option" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn }};
+    const opts = [_]option{};
+    const args = [_][]const u8{ "prog", "hello", "--bogus" };
+    try testing.expectError(Error.UnknownOption, startWithArgs(&cmds, &opts, &args, false));
+}
+
+test "startWithArgs: missing required option" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn, .req = &.{"name"} }};
+    const opts = [_]option{.{ .name = "name", .short = 'n', .long = "name" }};
+    const args = [_][]const u8{ "prog", "hello" };
+    try testing.expectError(Error.MissingRequiredOption, startWithArgs(&cmds, &opts, &args, false));
+}
+
+test "startWithArgs: unexpected positional argument" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn }};
+    const opts = [_]option{};
+    const args = [_][]const u8{ "prog", "hello", "extra" };
+    try testing.expectError(Error.UnexpectedArgument, startWithArgs(&cmds, &opts, &args, false));
+}
+
+test "startWithArgs: handler failure propagates as CommandExecutionFailed" {
+    TestState.reset();
+    TestState.should_fail = true;
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn }};
+    const opts = [_]option{};
+    const args = [_][]const u8{ "prog", "hello" };
+    try testing.expectError(Error.CommandExecutionFailed, startWithArgs(&cmds, &opts, &args, false));
+}
+
+test "startWithArgs: bare option with no value defaults to empty string" {
+    TestState.reset();
+    const cmds = [_]command{.{ .name = "hello", .func = &TestState.cmdFn, .opt = &.{"name"} }};
+    const opts = [_]option{.{ .name = "name", .short = 'n', .long = "name" }};
+    const args = [_][]const u8{ "prog", "hello", "--name" };
+    try startWithArgs(&cmds, &opts, &args, false);
+    try testing.expectEqualStrings("", TestState.name_value);
+}
+
