@@ -209,7 +209,7 @@ pub const methods = struct {
             return true;
         }
 
-        // Handler for the "interactive" command — arrow-key driven menu.
+        // Handler for the "interactive" command - arrow-key driven menu.
         pub fn interactiveFn(_: []const cli.option) bool {
             const allocator = runtime.gpa;
 

@@ -1,4 +1,4 @@
-babyline — a small Zig CLI demo with subcommands, persistent config, and shell completion.
+babyline - a small Zig CLI demo with subcommands, persistent config, and shell completion.
 
 USAGE
     babyline <command> [options]

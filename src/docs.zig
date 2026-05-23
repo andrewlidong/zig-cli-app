@@ -110,7 +110,7 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
             try w.writeAll("**Required options:**\n\n");
             for (c.req) |opt_name| {
                 if (findOption(options, opt_name)) |o| {
-                    try w.print("- `-{c}, --{s} <value>` — {s}\n", .{ o.short, o.long, o.desc });
+                    try w.print("- `-{c}, --{s} <value>` - {s}\n", .{ o.short, o.long, o.desc });
                 }
             }
             try w.writeAll("\n");
@@ -120,7 +120,7 @@ fn writeMarkdown(w: *std.Io.Writer, commands: []const cli.command, options: []co
             try w.writeAll("**Optional options:**\n\n");
             for (c.opt) |opt_name| {
                 if (findOption(options, opt_name)) |o| {
-                    try w.print("- `-{c}, --{s} <value>` — {s}\n", .{ o.short, o.long, o.desc });
+                    try w.print("- `-{c}, --{s} <value>` - {s}\n", .{ o.short, o.long, o.desc });
                 }
             }
             try w.writeAll("\n");
@@ -212,7 +212,7 @@ fn writeMan(w: *std.Io.Writer, commands: []const cli.command, options: []const c
 
 fn writeText(w: *std.Io.Writer, commands: []const cli.command, options: []const cli.option) !void {
     try w.writeAll(
-        \\babyline — a small Zig CLI demo with subcommands, persistent config, and shell completion.
+        \\babyline - a small Zig CLI demo with subcommands, persistent config, and shell completion.
         \\
         \\USAGE
         \\    babyline <command> [options]

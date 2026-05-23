@@ -42,7 +42,7 @@ short and long flags both work (`-g` / `--greeting`). missing a required option 
 # bash (macOS, via Homebrew bash-completion)
 ./zig-out/bin/babyline completion bash > "$(brew --prefix)/etc/bash_completion.d/babyline"
 
-# zsh — drop into a directory on $fpath
+# zsh - drop into a directory on $fpath
 ./zig-out/bin/babyline completion zsh > "${fpath[1]}/_babyline"
 # then restart your shell, or: autoload -U compinit && compinit
 
@@ -69,7 +69,7 @@ or via the build step:
 zig build docs
 ```
 
-[docs/babyline.md](docs/babyline.md) is the easiest to skim — GitHub renders it.
+[docs/babyline.md](docs/babyline.md) is the easiest to skim - GitHub renders it.
 
 ## tests
 
