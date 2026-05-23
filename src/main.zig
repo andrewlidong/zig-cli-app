@@ -104,4 +104,5 @@ pub fn main(init: std.process.Init) !void {
 test {
     _ = @import("config.zig");
     _ = @import("cli.zig");
+    _ = @import("completion.zig");
 }

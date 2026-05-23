@@ -254,3 +254,79 @@ fn writeFish(w: *std.Io.Writer, commands: []const cli.command, options: []const 
 
     try w.writeAll("\ncomplete -c cli -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish'\n");
 }
+
+// --- tests ---
+
+const testing = std.testing;
+
+fn noopCmdFn(_: []const cli.option) bool {
+    return true;
+}
+
+const test_commands = [_]cli.command{
+    .{ .name = "hello", .func = &noopCmdFn, .req = &.{"greeting"}, .opt = &.{"name"} },
+    .{ .name = "user:list", .func = &noopCmdFn },
+};
+
+const test_options = [_]cli.option{
+    .{ .name = "name", .short = 'n', .long = "name" },
+    .{ .name = "greeting", .short = 'g', .long = "greeting" },
+};
+
+test "writeBash: emits command names and option flags" {
+    var aw: std.Io.Writer.Allocating = .init(testing.allocator);
+    defer aw.deinit();
+
+    try writeBash(&aw.writer, &test_commands, &test_options);
+    const out = aw.written();
+
+    try testing.expect(std.mem.indexOf(u8, out, "_cli_complete") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "hello") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "user:list") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-g --greeting") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-n --name") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "complete -F _cli_complete cli") != null);
+}
+
+test "writeZsh: emits compdef header and escaped colon commands" {
+    var aw: std.Io.Writer.Allocating = .init(testing.allocator);
+    defer aw.deinit();
+
+    try writeZsh(&aw.writer, &test_commands, &test_options);
+    const out = aw.written();
+
+    try testing.expect(std.mem.indexOf(u8, out, "#compdef cli") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "user\\:list") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-g --greeting") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "_values 'shell' bash zsh fish") != null);
+}
+
+test "writeFish: emits per-command complete lines and subcommand options" {
+    var aw: std.Io.Writer.Allocating = .init(testing.allocator);
+    defer aw.deinit();
+
+    try writeFish(&aw.writer, &test_commands, &test_options);
+    const out = aw.written();
+
+    try testing.expect(std.mem.indexOf(u8, out, "complete -c cli -f") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-a 'hello'") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-a 'user:list'") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "__fish_seen_subcommand_from hello") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-s g -l greeting") != null);
+    try testing.expect(std.mem.indexOf(u8, out, "-s n -l name") != null);
+}
+
+test "descFor: returns description for known name, empty otherwise" {
+    try testing.expectEqualStrings("Greet someone", descFor(&command_descriptions, "hello"));
+    try testing.expectEqualStrings("Config key", descFor(&option_descriptions, "key"));
+    try testing.expectEqualStrings("", descFor(&command_descriptions, "nonexistent"));
+}
+
+test "findOption: returns matching option or null" {
+    const found = findOption(&test_options, "name");
+    try testing.expect(found != null);
+    try testing.expectEqual(@as(u8, 'n'), found.?.short);
+
+    try testing.expect(findOption(&test_options, "missing") == null);
+}
+
