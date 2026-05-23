@@ -157,7 +157,7 @@ pub const Config = struct {
         var buf: std.ArrayList(u8) = .empty;
         defer buf.deinit(self.allocator);
 
-        try buf.appendSlice(self.allocator, "# auto-managed by cli\n");
+        try buf.appendSlice(self.allocator, "# auto-managed by babyline\n");
 
         var section_it = self.sections.iterator();
         while (section_it.next()) |entry| {
@@ -199,12 +199,12 @@ pub const Config = struct {
 pub fn configPath(allocator: std.mem.Allocator) ![]u8 {
     if (runtime.environ.getPosix("XDG_CONFIG_HOME")) |xdg| {
         if (xdg.len > 0) {
-            return try std.fs.path.join(allocator, &.{ xdg, "cli", "config" });
+            return try std.fs.path.join(allocator, &.{ xdg, "babyline", "config" });
         }
     }
 
     const home = runtime.environ.getPosix("HOME") orelse return Error.HomeNotFound;
-    return try std.fs.path.join(allocator, &.{ home, ".config", "cli", "config" });
+    return try std.fs.path.join(allocator, &.{ home, ".config", "babyline", "config" });
 }
 
 fn parse(allocator: std.mem.Allocator, source: []const u8) !Config {

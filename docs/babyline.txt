@@ -1,7 +1,7 @@
-cli — a small Zig CLI demo with subcommands, persistent config, and shell completion.
+babyline — a small Zig CLI demo with subcommands, persistent config, and shell completion.
 
 USAGE
-    cli <command> [options]
+    babyline <command> [options]
 
 COMMANDS
     hello            Greet someone

@@ -8,7 +8,7 @@ pub fn build(b: *Build) void {
     });
 
     const exe               = b.addExecutable(.{
-        .name               = "cli",
+        .name               = "babyline",
         .root_module        = exe_mod,
     });
 
